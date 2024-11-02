@@ -1,75 +1,179 @@
 "use strict";
-/*
- * ATTENTION: An "eval-source-map" devtool has been used.
- * This devtool is neither made for production nor for readable output files.
- * It uses "eval()" calls to create a separate source file with attached SourceMaps in the browser devtools.
- * If you are trying to read the output file, select a different devtool (https://webpack.js.org/configuration/devtool/)
- * or disable the default devtool with "devtool: false".
- * If you are looking for production-ready output files, see mode: "production" (https://webpack.js.org/configuration/mode/).
- */
 (() => {
 var exports = {};
-exports.id = "pages/api/sendEmail";
-exports.ids = ["pages/api/sendEmail"];
+exports.id = 719;
+exports.ids = [719];
 exports.modules = {
 
-/***/ "mongoose":
-/*!***************************!*\
-  !*** external "mongoose" ***!
-  \***************************/
+/***/ 1185:
 /***/ ((module) => {
 
 module.exports = require("mongoose");
 
 /***/ }),
 
-/***/ "nodemailer":
-/*!*****************************!*\
-  !*** external "nodemailer" ***!
-  \*****************************/
-/***/ ((module) => {
-
-module.exports = require("nodemailer");
-
-/***/ }),
-
-/***/ "(api)/./Email/Sender.js":
-/*!*************************!*\
-  !*** ./Email/Sender.js ***!
-  \*************************/
+/***/ 2232:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"sendConfirmationEmails\": () => (/* binding */ sendConfirmationEmails)\n/* harmony export */ });\n/* harmony import */ var nodemailer__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! nodemailer */ \"nodemailer\");\n/* harmony import */ var nodemailer__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(nodemailer__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _models_Order__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/models/Order */ \"(api)/./models/Order.js\");\n/* harmony import */ var _models_Product__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/models/Product */ \"(api)/./models/Product.js\");\n\n\n\n// Nodemailer setup\nconst transporter = nodemailer__WEBPACK_IMPORTED_MODULE_0___default().createTransport({\n    host: process.env.EMAIL_HOST,\n    port: process.env.EMAIL_PORT,\n    secure: process.env.EMAIL_SECURE === \"true\",\n    auth: {\n        user: process.env.EMAIL_USER,\n        pass: process.env.EMAIL_PASS\n    }\n});\nasync function sendConfirmationEmails() {\n    try {\n        const orders = await _models_Order__WEBPACK_IMPORTED_MODULE_1__.Order.find({\n            sendEmailSignal: true,\n            emailSent: false\n        });\n        if (orders.length === 0) {\n            console.log(\"No orders found that require email confirmation.\");\n            return;\n        }\n        for (const order of orders){\n            console.log(`Processing order ID: ${order._id}`);\n            const productDetails = await Promise.all(order.line_items.map(async (item)=>{\n                const product = await _models_Product__WEBPACK_IMPORTED_MODULE_2__.Product.findById(item.productId);\n                return {\n                    title: product?.title || \"Unknown Product\",\n                    price: product?.price || 0,\n                    quantity: item.quantity,\n                    selectedOptions: item.selectedOptions,\n                    image: product?.images[0] || \"\"\n                };\n            }));\n            const itemsTotal = productDetails.reduce((total, product)=>total + (product.price || 0) * (product.quantity || 1), 0);\n            const shopDiscount = itemsTotal >= 5000 ? itemsTotal * 0.1 : 0;\n            const subtotal = itemsTotal - shopDiscount;\n            const deliveryFee = itemsTotal >= 3000 ? 0 : 99;\n            const totalPayment = subtotal + deliveryFee;\n            const message = `\n      <div style=\"max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; font-family: Arial, sans-serif; color: #333;\">\n        \n        <div style=\"text-align: center;\">\n          <img src=\"https://yourdomain.com/LogoMail.png\" alt=\"Logo\" style=\"width: 100%; height: auto; max-width: 180px; margin-bottom: 20px;\" />\n        </div>\n        \n        <h1 style=\"text-align: center; font-size: 1.4rem; color: #444;\">Order Confirmation</h1>\n        <p style=\"text-align: center; font-size: 1rem;\">Thank you, <strong>${order.name}</strong>, for your purchase!</p>\n        <p style=\"text-align: center; margin-bottom: 20px;\">Your order has been placed successfully. We will notify you once your package is on its way.</p>\n\n        <div style=\"margin-bottom: 20px; border-top: 1px solid #ddd; padding-top: 20px;\">\n          <h2 style=\"font-size: 1.2rem; margin-bottom: 10px;\">Order Summary</h2>\n          <ul style=\"list-style: none; padding: 0;\">\n            ${productDetails.map((product)=>`\n              <li style=\"display: flex; gap: 10px; border-bottom: 1px solid #ddd; padding: 15px 0;\">\n                <img src=\"${product.image}\" alt=\"${product.title}\" style=\"width: 80px; height: 80px; object-fit: cover; border-radius: 5px;\" />\n                <div style=\"flex-grow: 1;\">\n                  <p style=\"margin: 0; font-weight: bold;\">${product.title}</p>\n                  <p style=\"margin: 4px 0;\"><strong>Quantity:</strong> ${product.quantity}</p>\n                  <p style=\"margin: 4px 0;\"><strong>Price:</strong> PKR ${product.price.toFixed(2)}</p>\n                  <p style=\"margin: 4px 0;\"><strong>Dimensions:</strong> ${product.selectedOptions.Dimensions || \"N/A\"}</p>\n                  <p style=\"margin: 4px 0;\"><strong>Color:</strong> ${product.selectedOptions.Colors || \"N/A\"}</p>\n                </div>\n              </li>`).join(\"\")}\n          </ul>\n        </div>\n\n  <div style=\"margin-bottom: 20px; border-top: 1px solid #ddd; padding-top: 20px;\">\n    <h2 style=\"font-size: 1.2rem; margin-bottom: 10px;\">Payment Summary</h2>\n    <p><strong>Item(s) Total:</strong> PKR ${itemsTotal.toFixed(2)}</p>\n    <p><strong>Shop Discount:</strong> ${shopDiscount > 0 ? `-PKR ${shopDiscount.toFixed(2)}` : \"PKR 0.00\"}</p>\n    <p><strong>Subtotal:</strong> PKR ${subtotal.toFixed(2)}</p>\n    <p><strong>Delivery:</strong> ${deliveryFee === 0 ? \"FREE\" : `PKR ${deliveryFee.toFixed(2)}`}</p>\n    <h3 style=\"margin-top: 10px; font-size: 1.2rem;\"><strong>Total Payment:</strong> PKR ${totalPayment.toFixed(2)}</h3>\n  </div>\n\n        <div style=\"margin-bottom: 20px; border-top: 1px solid #ddd; padding-top: 20px;\">\n          <h2 style=\"font-size: 1.2rem; margin-bottom: 10px;\">Delivery Details</h2>\n          <p><strong>Address:</strong> ${order.streetAddress}, ${order.city}, ${order.country}</p>\n          <p><strong>Phone:</strong> ${order.phone}</p>\n          <p><strong>Email:</strong> ${order.email}</p>\n          <p><strong>Payment Method:</strong> ${order.paymentMethod}</p>\n        </div>\n\n        <div style=\"text-align: center; border-top: 1px solid #ddd; padding-top: 20px;\">\n          <p>This is an automatically generated email. Please do not reply.</p>\n        </div>\n      </div>`;\n            const mailOptions = {\n                from: process.env.EMAIL_USER,\n                to: order.email,\n                subject: \"Your Order Confirmation\",\n                html: message\n            };\n            await transporter.sendMail(mailOptions);\n            console.log(`Confirmation email sent for order ID: ${order._id}`);\n            await _models_Order__WEBPACK_IMPORTED_MODULE_1__.Order.findByIdAndUpdate(order._id, {\n                emailSent: true\n            });\n        }\n    } catch (error) {\n        console.error(\"Error sending confirmation emails:\", error);\n    }\n}\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,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RUFBRTFCLE1BQU04QixhQUFhLENBQUMsRUFBRSxFQUFFOUIsTUFBTStCLElBQUksQ0FBQyxFQUFFLEVBQUUvQixNQUFNZ0MsT0FBTyxDQUFDO3FDQUN6RCxFQUFFaEMsTUFBTWlDLEtBQUssQ0FBQztxQ0FDZCxFQUFFakMsTUFBTWtDLEtBQUssQ0FBQzs4Q0FDTCxFQUFFbEMsTUFBTW1DLGFBQWEsQ0FBQzs7Ozs7O1lBTXhELENBQUM7WUFFUCxNQUFNQyxjQUFjO2dCQUNsQkMsTUFBTXpELFFBQVFDLEdBQUcsQ0FBQ1EsVUFBVTtnQkFDNUJpRCxJQUFJdEMsTUFBTWtDLEtBQUs7Z0JBQ2ZLLFNBQVM7Z0JBQ1RDLE1BQU1oQjtZQUNSO1lBRUEsTUFBTS9DLFlBQVlnRSxRQUFRLENBQUNMO1lBQzNCdEMsUUFBUUMsR0FBRyxDQUFDLENBQUMsc0NBQXNDLEVBQUVDLE1BQU1DLEdBQUcsQ0FBQyxDQUFDO1lBQ2hFLE1BQU0xQixrRUFBdUIsQ0FBQ3lCLE1BQU1DLEdBQUcsRUFBRTtnQkFBRUwsV0FBVyxJQUFJO1lBQUM7UUFDN0Q7SUFDRixFQUFFLE9BQU8rQyxPQUFPO1FBQ2Q3QyxRQUFRNkMsS0FBSyxDQUFDLHNDQUFzQ0E7SUFDdEQ7QUFDRixDQUFDIiwic291cmNlcyI6WyJ3ZWJwYWNrOi8vZWNvbW1lcmNlLWFkbWluLy4vRW1haWwvU2VuZGVyLmpzPzdkMjAiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IG5vZGVtYWlsZXIgZnJvbSBcIm5vZGVtYWlsZXJcIjtcbmltcG9ydCB7IE9yZGVyIH0gZnJvbSBcIkAvbW9kZWxzL09yZGVyXCI7XG5pbXBvcnQgeyBQcm9kdWN0IH0gZnJvbSBcIkAvbW9kZWxzL1Byb2R1Y3RcIjtcblxuLy8gTm9kZW1haWxlciBzZXR1cFxuY29uc3QgdHJhbnNwb3J0ZXIgPSBub2RlbWFpbGVyLmNyZWF0ZVRyYW5zcG9ydCh7XG4gIGhvc3Q6IHByb2Nlc3MuZW52LkVNQUlMX0hPU1QsXG4gIHBvcnQ6IHByb2Nlc3MuZW52LkVNQUlMX1BPUlQsXG4gIHNlY3VyZTogcHJvY2Vzcy5lbnYuRU1BSUxfU0VDVVJFID09PSBcInRydWVcIixcbiAgYXV0aDoge1xuICAgIHVzZXI6IHByb2Nlc3MuZW52LkVNQUlMX1VTRVIsXG4gICAgcGFzczogcHJvY2Vzcy5lbnYuRU1BSUxfUEFTUyxcbiAgfSxcbn0pO1xuXG5leHBvcnQgYXN5bmMgZnVuY3Rpb24gc2VuZENvbmZpcm1hdGlvbkVtYWlscygpIHtcbiAgdHJ5IHtcbiAgICBjb25zdCBvcmRlcnMgPSBhd2FpdCBPcmRlci5maW5kKHsgc2VuZEVtYWlsU2lnbmFsOiB0cnVlLCBlbWFpbFNlbnQ6IGZhbHNlIH0pO1xuXG4gICAgaWYgKG9yZGVycy5sZW5ndGggPT09IDApIHtcbiAgICAgIGNvbnNvbGUubG9nKFwiTm8gb3JkZXJzIGZvdW5kIHRoYXQgcmVxdWlyZSBlbWFpbCBjb25maXJtYXRpb24uXCIpO1xuICAgICAgcmV0dXJuO1xuICAgIH1cblxuICAgIGZvciAoY29uc3Qgb3JkZXIgb2Ygb3JkZXJzKSB7XG4gICAgICBjb25zb2xlLmxvZyhgUHJvY2Vzc2luZyBvcmRlciBJRDogJHtvcmRlci5faWR9YCk7XG5cbiAgICAgIGNvbnN0IHByb2R1Y3REZXRhaWxzID0gYXdhaXQgUHJvbWlzZS5hbGwoXG4gICAgICAgIG9yZGVyLmxpbmVfaXRlbXMubWFwKGFzeW5jIChpdGVtKSA9PiB7XG4gICAgICAgICAgY29uc3QgcHJvZHVjdCA9IGF3YWl0IFByb2R1Y3QuZmluZEJ5SWQoaXRlbS5wcm9kdWN0SWQpO1xuICAgICAgICAgIHJldHVybiB7XG4gICAgICAgICAgICB0aXRsZTogcHJvZHVjdD8udGl0bGUgfHwgXCJVbmtub3duIFByb2R1Y3RcIixcbiAgICAgICAgICAgIHByaWNlOiBwcm9kdWN0Py5wcmljZSB8fCAwLFxuICAgICAgICAgICAgcXVhbnRpdHk6IGl0ZW0ucXVhbnRpdHksXG4gICAgICAgICAgICBzZWxlY3RlZE9wdGlvbnM6IGl0ZW0uc2VsZWN0ZWRPcHRpb25zLFxuICAgICAgICAgICAgaW1hZ2U6IHByb2R1Y3Q/LmltYWdlc1swXSB8fCBcIlwiLFxuICAgICAgICAgIH07XG4gICAgICAgIH0pXG4gICAgICApO1xuXG4gICAgICBjb25zdCBpdGVtc1RvdGFsID0gcHJvZHVjdERldGFpbHMucmVkdWNlKFxuICAgICAgICAodG90YWwsIHByb2R1Y3QpID0+IHRvdGFsICsgKHByb2R1Y3QucHJpY2UgfHwgMCkgKiAocHJvZHVjdC5xdWFudGl0eSB8fCAxKSxcbiAgICAgICAgMFxuICAgICAgKTtcbiAgICAgIFxuICAgICAgY29uc3Qgc2hvcERpc2NvdW50ID0gaXRlbXNUb3RhbCA+PSA1MDAwID8gaXRlbXNUb3RhbCAqIDAuMSA6IDA7XG4gICAgICBjb25zdCBzdWJ0b3RhbCA9IGl0ZW1zVG90YWwgLSBzaG9wRGlzY291bnQ7XG4gICAgICBjb25zdCBkZWxpdmVyeUZlZSA9IGl0ZW1zVG90YWwgPj0gMzAwMCA/IDAgOiA5OTtcbiAgICAgIGNvbnN0IHRvdGFsUGF5bWVudCA9IHN1YnRvdGFsICsgZGVsaXZlcnlGZWU7XG4gICAgICBcblxuICAgICAgY29uc3QgbWVzc2FnZSA9IGBcbiAgICAgIDxkaXYgc3R5bGU9XCJtYXgtd2lkdGg6IDYwMHB4OyBtYXJnaW46IGF1dG87IHBhZGRpbmc6IDIwcHg7IGJvcmRlcjogMXB4IHNvbGlkICNkZGQ7IGJvcmRlci1yYWRpdXM6IDhweDsgYmFja2dyb3VuZC1jb2xvcjogI2Y5ZjlmOTsgZm9udC1mYW1pbHk6IEFyaWFsLCBzYW5zLXNlcmlmOyBjb2xvcjogIzMzMztcIj5cbiAgICAgICAgXG4gICAgICAgIDxkaXYgc3R5bGU9XCJ0ZXh0LWFsaWduOiBjZW50ZXI7XCI+XG4gICAgICAgICAgPGltZyBzcmM9XCJodHRwczovL3lvdXJkb21haW4uY29tL0xvZ29NYWlsLnBuZ1wiIGFsdD1cIkxvZ29cIiBzdHlsZT1cIndpZHRoOiAxMDAlOyBoZWlnaHQ6IGF1dG87IG1heC13aWR0aDogMTgwcHg7IG1hcmdpbi1ib3R0b206IDIwcHg7XCIgLz5cbiAgICAgICAgPC9kaXY+XG4gICAgICAgIFxuICAgICAgICA8aDEgc3R5bGU9XCJ0ZXh0LWFsaWduOiBjZW50ZXI7IGZvbnQtc2l6ZTogMS40cmVtOyBjb2xvcjogIzQ0NDtcIj5PcmRlciBDb25maXJtYXRpb248L2gxPlxuICAgICAgICA8cCBzdHlsZT1cInRleHQtYWxpZ246IGNlbnRlcjsgZm9udC1zaXplOiAxcmVtO1wiPlRoYW5rIHlvdSwgPHN0cm9uZz4ke29yZGVyLm5hbWV9PC9zdHJvbmc+LCBmb3IgeW91ciBwdXJjaGFzZSE8L3A+XG4gICAgICAgIDxwIHN0eWxlPVwidGV4dC1hbGlnbjogY2VudGVyOyBtYXJnaW4tYm90dG9tOiAyMHB4O1wiPllvdXIgb3JkZXIgaGFzIGJlZW4gcGxhY2VkIHN1Y2Nlc3NmdWxseS4gV2Ugd2lsbCBub3RpZnkgeW91IG9uY2UgeW91ciBwYWNrYWdlIGlzIG9uIGl0cyB3YXkuPC9wPlxuXG4gICAgICAgIDxkaXYgc3R5bGU9XCJtYXJnaW4tYm90dG9tOiAyMHB4OyBib3JkZXItdG9wOiAxcHggc29saWQgI2RkZDsgcGFkZGluZy10b3A6IDIwcHg7XCI+XG4gICAgICAgICAgPGgyIHN0eWxlPVwiZm9udC1zaXplOiAxLjJyZW07IG1hcmdpbi1ib3R0b206IDEwcHg7XCI+T3JkZXIgU3VtbWFyeTwvaDI+XG4gICAgICAgICAgPHVsIHN0eWxlPVwibGlzdC1zdHlsZTogbm9uZTsgcGFkZGluZzogMDtcIj5cbiAgICAgICAgICAgICR7cHJvZHVjdERldGFpbHMubWFwKChwcm9kdWN0KSA9PiBgXG4gICAgICAgICAgICAgIDxsaSBzdHlsZT1cImRpc3BsYXk6IGZsZXg7IGdhcDogMTBweDsgYm9yZGVyLWJvdHRvbTogMXB4IHNvbGlkICNkZGQ7IHBhZGRpbmc6IDE1cHggMDtcIj5cbiAgICAgICAgICAgICAgICA8aW1nIHNyYz1cIiR7cHJvZHVjdC5pbWFnZX1cIiBhbHQ9XCIke3Byb2R1Y3QudGl0bGV9XCIgc3R5bGU9XCJ3aWR0aDogODBweDsgaGVpZ2h0OiA4MHB4OyBvYmplY3QtZml0OiBjb3ZlcjsgYm9yZGVyLXJhZGl1czogNXB4O1wiIC8+XG4gICAgICAgICAgICAgICAgPGRpdiBzdHlsZT1cImZsZXgtZ3JvdzogMTtcIj5cbiAgICAgICAgICAgICAgICAgIDxwIHN0eWxlPVwibWFyZ2luOiAwOyBmb250LXdlaWdodDogYm9sZDtcIj4ke3Byb2R1Y3QudGl0bGV9PC9wPlxuICAgICAgICAgICAgICAgICAgPHAgc3R5bGU9XCJtYXJnaW46IDRweCAwO1wiPjxzdHJvbmc+UXVhbnRpdHk6PC9zdHJvbmc+ICR7cHJvZHVjdC5xdWFudGl0eX08L3A+XG4gICAgICAgICAgICAgICAgICA8cCBzdHlsZT1cIm1hcmdpbjogNHB4IDA7XCI+PHN0cm9uZz5QcmljZTo8L3N0cm9uZz4gUEtSICR7cHJvZHVjdC5wcmljZS50b0ZpeGVkKDIpfTwvcD5cbiAgICAgICAgICAgICAgICAgIDxwIHN0eWxlPVwibWFyZ2luOiA0cHggMDtcIj48c3Ryb25nPkRpbWVuc2lvbnM6PC9zdHJvbmc+ICR7cHJvZHVjdC5zZWxlY3RlZE9wdGlvbnMuRGltZW5zaW9ucyB8fCBcIk4vQVwifTwvcD5cbiAgICAgICAgICAgICAgICAgIDxwIHN0eWxlPVwibWFyZ2luOiA0cHggMDtcIj48c3Ryb25nPkNvbG9yOjwvc3Ryb25nPiAke3Byb2R1Y3Quc2VsZWN0ZWRPcHRpb25zLkNvbG9ycyB8fCBcIk4vQVwifTwvcD5cbiAgICAgICAgICAgICAgICA8L2Rpdj5cbiAgICAgICAgICAgICAgPC9saT5gKS5qb2luKFwiXCIpfVxuICAgICAgICAgIDwvdWw+XG4gICAgICAgIDwvZGl2PlxuXG4gIDxkaXYgc3R5bGU9XCJtYXJnaW4tYm90dG9tOiAyMHB4OyBib3JkZXItdG9wOiAxcHggc29saWQgI2RkZDsgcGFkZGluZy10b3A6IDIwcHg7XCI+XG4gICAgPGgyIHN0eWxlPVwiZm9udC1zaXplOiAxLjJyZW07IG1hcmdpbi1ib3R0b206IDEwcHg7XCI+UGF5bWVudCBTdW1tYXJ5PC9oMj5cbiAgICA8cD48c3Ryb25nPkl0ZW0ocykgVG90YWw6PC9zdHJvbmc+IFBLUiAke2l0ZW1zVG90YWwudG9GaXhlZCgyKX08L3A+XG4gICAgPHA+PHN0cm9uZz5TaG9wIERpc2NvdW50Ojwvc3Ryb25nPiAke3Nob3BEaXNjb3VudCA+IDAgPyBgLVBLUiAke3Nob3BEaXNjb3VudC50b0ZpeGVkKDIpfWAgOiBcIlBLUiAwLjAwXCJ9PC9wPlxuICAgIDxwPjxzdHJvbmc+U3VidG90YWw6PC9zdHJvbmc+IFBLUiAke3N1YnRvdGFsLnRvRml4ZWQoMil9PC9wPlxuICAgIDxwPjxzdHJvbmc+RGVsaXZlcnk6PC9zdHJvbmc+ICR7ZGVsaXZlcnlGZWUgPT09IDAgPyBcIkZSRUVcIiA6IGBQS1IgJHtkZWxpdmVyeUZlZS50b0ZpeGVkKDIpfWB9PC9wPlxuICAgIDxoMyBzdHlsZT1cIm1hcmdpbi10b3A6IDEwcHg7IGZvbnQtc2l6ZTogMS4ycmVtO1wiPjxzdHJvbmc+VG90YWwgUGF5bWVudDo8L3N0cm9uZz4gUEtSICR7dG90YWxQYXltZW50LnRvRml4ZWQoMil9PC9oMz5cbiAgPC9kaXY+XG5cbiAgICAgICAgPGRpdiBzdHlsZT1cIm1hcmdpbi1ib3R0b206IDIwcHg7IGJvcmRlci10b3A6IDFweCBzb2xpZCAjZGRkOyBwYWRkaW5nLXRvcDogMjBweDtcIj5cbiAgICAgICAgICA8aDIgc3R5bGU9XCJmb250LXNpemU6IDEuMnJlbTsgbWFyZ2luLWJvdHRvbTogMTBweDtcIj5EZWxpdmVyeSBEZXRhaWxzPC9oMj5cbiAgICAgICAgICA8cD48c3Ryb25nPkFkZHJlc3M6PC9zdHJvbmc+ICR7b3JkZXIuc3RyZWV0QWRkcmVzc30sICR7b3JkZXIuY2l0eX0sICR7b3JkZXIuY291bnRyeX08L3A+XG4gICAgICAgICAgPHA+PHN0cm9uZz5QaG9uZTo8L3N0cm9uZz4gJHtvcmRlci5waG9uZX08L3A+XG4gICAgICAgICAgPHA+PHN0cm9uZz5FbWFpbDo8L3N0cm9uZz4gJHtvcmRlci5lbWFpbH08L3A+XG4gICAgICAgICAgPHA+PHN0cm9uZz5QYXltZW50IE1ldGhvZDo8L3N0cm9uZz4gJHtvcmRlci5wYXltZW50TWV0aG9kfTwvcD5cbiAgICAgICAgPC9kaXY+XG5cbiAgICAgICAgPGRpdiBzdHlsZT1cInRleHQtYWxpZ246IGNlbnRlcjsgYm9yZGVyLXRvcDogMXB4IHNvbGlkICNkZGQ7IHBhZGRpbmctdG9wOiAyMHB4O1wiPlxuICAgICAgICAgIDxwPlRoaXMgaXMgYW4gYXV0b21hdGljYWxseSBnZW5lcmF0ZWQgZW1haWwuIFBsZWFzZSBkbyBub3QgcmVwbHkuPC9wPlxuICAgICAgICA8L2Rpdj5cbiAgICAgIDwvZGl2PmA7XG5cbiAgICAgIGNvbnN0IG1haWxPcHRpb25zID0ge1xuICAgICAgICBmcm9tOiBwcm9jZXNzLmVudi5FTUFJTF9VU0VSLFxuICAgICAgICB0bzogb3JkZXIuZW1haWwsXG4gICAgICAgIHN1YmplY3Q6IFwiWW91ciBPcmRlciBDb25maXJtYXRpb25cIixcbiAgICAgICAgaHRtbDogbWVzc2FnZSxcbiAgICAgIH07XG5cbiAgICAgIGF3YWl0IHRyYW5zcG9ydGVyLnNlbmRNYWlsKG1haWxPcHRpb25zKTtcbiAgICAgIGNvbnNvbGUubG9nKGBDb25maXJtYXRpb24gZW1haWwgc2VudCBmb3Igb3JkZXIgSUQ6ICR7b3JkZXIuX2lkfWApO1xuICAgICAgYXdhaXQgT3JkZXIuZmluZEJ5SWRBbmRVcGRhdGUob3JkZXIuX2lkLCB7IGVtYWlsU2VudDogdHJ1ZSB9KTtcbiAgICB9XG4gIH0gY2F0Y2ggKGVycm9yKSB7XG4gICAgY29uc29sZS5lcnJvcihcIkVycm9yIHNlbmRpbmcgY29uZmlybWF0aW9uIGVtYWlsczpcIiwgZXJyb3IpO1xuICB9XG59XG4iXSwibmFtZXMiOlsibm9kZW1haWxlciIsIk9yZGVyIiwiUHJvZHVjdCIsInRyYW5zcG9ydGVyIiwiY3JlYXRlVHJhbnNwb3J0IiwiaG9zdCIsInByb2Nlc3MiLCJlbnYiLCJFTUFJTF9IT1NUIiwicG9ydCIsIkVNQUlMX1BPUlQiLCJzZWN1cmUiLCJFTUFJTF9TRUNVUkUiLCJhdXRoIiwidXNlciIsIkVNQUlMX1VTRVIiLCJwYXNzIiwiRU1BSUxfUEFTUyIsInNlbmRDb25maXJtYXRpb25FbWFpbHMiLCJvcmRlcnMiLCJmaW5kIiwic2VuZEVtYWlsU2lnbmFsIiwiZW1haWxTZW50IiwibGVuZ3RoIiwiY29uc29sZSIsImxvZyIsIm9yZGVyIiwiX2lkIiwicHJvZHVjdERldGFpbHMiLCJQcm9taXNlIiwiYWxsIiwibGluZV9pdGVtcyIsIm1hcCIsIml0ZW0iLCJwcm9kdWN0IiwiZmluZEJ5SWQiLCJwcm9kdWN0SWQiLCJ0aXRsZSIsInByaWNlIiwicXVhbnRpdHkiLCJzZWxlY3RlZE9wdGlvbnMiLCJpbWFnZSIsImltYWdlcyIsIml0ZW1zVG90YWwiLCJyZWR1Y2UiLCJ0b3RhbCIsInNob3BEaXNjb3VudCIsInN1YnRvdGFsIiwiZGVsaXZlcnlGZWUiLCJ0b3RhbFBheW1lbnQiLCJtZXNzYWdlIiwibmFtZSIsInRvRml4ZWQiLCJEaW1lbnNpb25zIiwiQ29sb3JzIiwiam9pbiIsInN0cmVldEFkZHJlc3MiLCJjaXR5IiwiY291bnRyeSIsInBob25lIiwiZW1haWwiLCJwYXltZW50TWV0aG9kIiwibWFpbE9wdGlvbnMiLCJmcm9tIiwidG8iLCJzdWJqZWN0IiwiaHRtbCIsInNlbmRNYWlsIiwiZmluZEJ5SWRBbmRVcGRhdGUiLCJlcnJvciJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///(api)/./Email/Sender.js\n");
+// ESM COMPAT FLAG
+__webpack_require__.r(__webpack_exports__);
 
-/***/ }),
+// EXPORTS
+__webpack_require__.d(__webpack_exports__, {
+  "default": () => (/* binding */ handler)
+});
 
-/***/ "(api)/./models/Order.js":
-/*!*************************!*\
-  !*** ./models/Order.js ***!
-  \*************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+// EXTERNAL MODULE: external "mongoose"
+var external_mongoose_ = __webpack_require__(1185);
+var external_mongoose_default = /*#__PURE__*/__webpack_require__.n(external_mongoose_);
+;// CONCATENATED MODULE: external "nodemailer"
+const external_nodemailer_namespaceObject = require("nodemailer");
+var external_nodemailer_default = /*#__PURE__*/__webpack_require__.n(external_nodemailer_namespaceObject);
+// EXTERNAL MODULE: ./models/Order.js
+var Order = __webpack_require__(6125);
+// EXTERNAL MODULE: ./models/Product.js
+var Product = __webpack_require__(6183);
+;// CONCATENATED MODULE: ./Email/Sender.js
 
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"Order\": () => (/* binding */ Order)\n/* harmony export */ });\n/* harmony import */ var mongoose__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! mongoose */ \"mongoose\");\n/* harmony import */ var mongoose__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(mongoose__WEBPACK_IMPORTED_MODULE_0__);\n\nconst OrderSchema = new mongoose__WEBPACK_IMPORTED_MODULE_0__.Schema({\n    line_items: [\n        {\n            productId: {\n                type: String,\n                required: true\n            },\n            selectedOptions: {\n                type: Object,\n                required: true\n            },\n            quantity: {\n                type: Number,\n                required: true\n            }\n        }\n    ],\n    name: String,\n    email: String,\n    city: String,\n    phone: String,\n    streetAddress: String,\n    country: String,\n    paymentMethod: String,\n    sendEmailSignal: {\n        type: Boolean,\n        default: false\n    },\n    emailSent: {\n        type: Boolean,\n        default: false\n    },\n    paid: {\n        type: Boolean,\n        default: false\n    },\n    createdAt: {\n        type: Date,\n        default: Date.now\n    },\n    updatedAt: {\n        type: Date,\n        default: Date.now\n    }\n});\nconst Order = mongoose__WEBPACK_IMPORTED_MODULE_0__.models?.Order || (0,mongoose__WEBPACK_IMPORTED_MODULE_0__.model)(\"Order\", OrderSchema);\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiKGFwaSkvLi9tb2RlbHMvT3JkZXIuanMuanMiLCJtYXBwaW5ncyI6Ijs7Ozs7O0FBQWlEO0FBRWpELE1BQU1HLGNBQWMsSUFBSUQsNENBQU1BLENBQUM7SUFDN0JFLFlBQVk7UUFBQztZQUNYQyxXQUFXO2dCQUFFQyxNQUFNQztnQkFBUUMsVUFBVSxJQUFJO1lBQUM7WUFDMUNDLGlCQUFpQjtnQkFBRUgsTUFBTUk7Z0JBQVFGLFVBQVUsSUFBSTtZQUFDO1lBQ2hERyxVQUFVO2dCQUFFTCxNQUFNTTtnQkFBUUosVUFBVSxJQUFJO1lBQUM7UUFDM0M7S0FBRTtJQUNGSyxNQUFNTjtJQUNOTyxPQUFPUDtJQUNQUSxNQUFNUjtJQUNOUyxPQUFPVDtJQUNQVSxlQUFlVjtJQUNmVyxTQUFTWDtJQUNUWSxlQUFlWjtJQUNmYSxpQkFBaUI7UUFBRWQsTUFBTWU7UUFBU0MsU0FBUyxLQUFLO0lBQUM7SUFDakRDLFdBQVc7UUFBRWpCLE1BQU1lO1FBQVNDLFNBQVMsS0FBSztJQUFDO0lBQzNDRSxNQUFNO1FBQUVsQixNQUFNZTtRQUFTQyxTQUFTLEtBQUs7SUFBQztJQUN0Q0csV0FBVztRQUFFbkIsTUFBTW9CO1FBQU1KLFNBQVNJLEtBQUtDLEdBQUc7SUFBQztJQUMzQ0MsV0FBVztRQUFFdEIsTUFBTW9CO1FBQU1KLFNBQVNJLEtBQUtDLEdBQUc7SUFBQztBQUM3QztBQUVPLE1BQU1FLFFBQVE1Qiw0Q0FBTUEsRUFBRTRCLFNBQVM3QiwrQ0FBS0EsQ0FBQyxTQUFTRyxhQUFhIiwic291cmNlcyI6WyJ3ZWJwYWNrOi8vZWNvbW1lcmNlLWFkbWluLy4vbW9kZWxzL09yZGVyLmpzP2ViMjkiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgbW9kZWwsIG1vZGVscywgU2NoZW1hIH0gZnJvbSBcIm1vbmdvb3NlXCI7XG5cbmNvbnN0IE9yZGVyU2NoZW1hID0gbmV3IFNjaGVtYSh7XG4gIGxpbmVfaXRlbXM6IFt7XG4gICAgcHJvZHVjdElkOiB7IHR5cGU6IFN0cmluZywgcmVxdWlyZWQ6IHRydWUgfSxcbiAgICBzZWxlY3RlZE9wdGlvbnM6IHsgdHlwZTogT2JqZWN0LCByZXF1aXJlZDogdHJ1ZSB9LCAvLyBBZGQgdGhpcyBsaW5lXG4gICAgcXVhbnRpdHk6IHsgdHlwZTogTnVtYmVyLCByZXF1aXJlZDogdHJ1ZSB9LFxuICB9XSxcbiAgbmFtZTogU3RyaW5nLFxuICBlbWFpbDogU3RyaW5nLFxuICBjaXR5OiBTdHJpbmcsXG4gIHBob25lOiBTdHJpbmcsXG4gIHN0cmVldEFkZHJlc3M6IFN0cmluZyxcbiAgY291bnRyeTogU3RyaW5nLFxuICBwYXltZW50TWV0aG9kOiBTdHJpbmcsXG4gIHNlbmRFbWFpbFNpZ25hbDogeyB0eXBlOiBCb29sZWFuLCBkZWZhdWx0OiBmYWxzZSB9LCAvLyBFbnN1cmUgdGhpcyBpcyBhZGRlZFxuICBlbWFpbFNlbnQ6IHsgdHlwZTogQm9vbGVhbiwgZGVmYXVsdDogZmFsc2UgfSwgLy8gTmV3IGZpZWxkXG4gIHBhaWQ6IHsgdHlwZTogQm9vbGVhbiwgZGVmYXVsdDogZmFsc2UgfSwgLy8gTmV3IGZpZWxkIHRvIHRyYWNrIHBheW1lbnQgc3RhdHVzXG4gIGNyZWF0ZWRBdDogeyB0eXBlOiBEYXRlLCBkZWZhdWx0OiBEYXRlLm5vdyB9LFxuICB1cGRhdGVkQXQ6IHsgdHlwZTogRGF0ZSwgZGVmYXVsdDogRGF0ZS5ub3cgfSxcbn0pO1xuXG5leHBvcnQgY29uc3QgT3JkZXIgPSBtb2RlbHM/Lk9yZGVyIHx8IG1vZGVsKCdPcmRlcicsIE9yZGVyU2NoZW1hKTtcbiJdLCJuYW1lcyI6WyJtb2RlbCIsIm1vZGVscyIsIlNjaGVtYSIsIk9yZGVyU2NoZW1hIiwibGluZV9pdGVtcyIsInByb2R1Y3RJZCIsInR5cGUiLCJTdHJpbmciLCJyZXF1aXJlZCIsInNlbGVjdGVkT3B0aW9ucyIsIk9iamVjdCIsInF1YW50aXR5IiwiTnVtYmVyIiwibmFtZSIsImVtYWlsIiwiY2l0eSIsInBob25lIiwic3RyZWV0QWRkcmVzcyIsImNvdW50cnkiLCJwYXltZW50TWV0aG9kIiwic2VuZEVtYWlsU2lnbmFsIiwiQm9vbGVhbiIsImRlZmF1bHQiLCJlbWFpbFNlbnQiLCJwYWlkIiwiY3JlYXRlZEF0IiwiRGF0ZSIsIm5vdyIsInVwZGF0ZWRBdCIsIk9yZGVyIl0sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///(api)/./models/Order.js\n");
 
-/***/ }),
 
-/***/ "(api)/./models/Product.js":
-/*!***************************!*\
-  !*** ./models/Product.js ***!
-  \***************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+// Nodemailer setup
+const transporter = external_nodemailer_default().createTransport({
+    host: process.env.EMAIL_HOST,
+    port: process.env.EMAIL_PORT,
+    secure: process.env.EMAIL_SECURE === "true",
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
+async function sendConfirmationEmails() {
+    try {
+        const orders = await Order/* Order.find */.K.find({
+            sendEmailSignal: true,
+            emailSent: false
+        });
+        if (orders.length === 0) {
+            console.log("No orders found that require email confirmation.");
+            return;
+        }
+        for (const order of orders){
+            console.log(`Processing order ID: ${order._id}`);
+            const productDetails = await Promise.all(order.line_items.map(async (item)=>{
+                const product = await Product/* Product.findById */.x.findById(item.productId);
+                return {
+                    title: product?.title || "Unknown Product",
+                    price: product?.price || 0,
+                    quantity: item.quantity,
+                    selectedOptions: item.selectedOptions,
+                    image: product?.images[0] || ""
+                };
+            }));
+            const itemsTotal = productDetails.reduce((total, product)=>total + (product.price || 0) * (product.quantity || 1), 0);
+            const shopDiscount = itemsTotal >= 5000 ? itemsTotal * 0.1 : 0;
+            const subtotal = itemsTotal - shopDiscount;
+            const deliveryFee = itemsTotal >= 3000 ? 0 : 99;
+            const totalPayment = subtotal + deliveryFee;
+            const message = `
+      <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; font-family: Arial, sans-serif; color: #333;">
+        
+        <div style="text-align: center;">
+          <img src="https://yourdomain.com/LogoMail.png" alt="Logo" style="width: 100%; height: auto; max-width: 180px; margin-bottom: 20px;" />
+        </div>
+        
+        <h1 style="text-align: center; font-size: 1.4rem; color: #444;">Order Confirmation</h1>
+        <p style="text-align: center; font-size: 1rem;">Thank you, <strong>${order.name}</strong>, for your purchase!</p>
+        <p style="text-align: center; margin-bottom: 20px;">Your order has been placed successfully. We will notify you once your package is on its way.</p>
 
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"Product\": () => (/* binding */ Product)\n/* harmony export */ });\n/* harmony import */ var mongoose__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! mongoose */ \"mongoose\");\n/* harmony import */ var mongoose__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(mongoose__WEBPACK_IMPORTED_MODULE_0__);\n\nconst ProductSchema = new mongoose__WEBPACK_IMPORTED_MODULE_0__.Schema({\n    title: {\n        type: String,\n        required: true\n    },\n    description: String,\n    price: {\n        type: Number,\n        required: true\n    },\n    discounted_percentage: {\n        type: Number\n    },\n    images: [\n        {\n            type: String\n        }\n    ],\n    category: {\n        type: (mongoose__WEBPACK_IMPORTED_MODULE_0___default().Types.ObjectId),\n        ref: \"Category\"\n    },\n    properties: {\n        type: Object\n    },\n    featured: {\n        type: Boolean,\n        default: false\n    }\n}, {\n    timestamps: true\n});\nconst Product = mongoose__WEBPACK_IMPORTED_MODULE_0__.models.Product || (0,mongoose__WEBPACK_IMPORTED_MODULE_0__.model)(\"Product\", ProductSchema);\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiKGFwaSkvLi9tb2RlbHMvUHJvZHVjdC5qcy5qcyIsIm1hcHBpbmdzIjoiOzs7Ozs7QUFBeUQ7QUFFekQsTUFBTUksZ0JBQWdCLElBQUlGLDRDQUFNQSxDQUFDO0lBQy9CRyxPQUFPO1FBQUNDLE1BQUtDO1FBQVFDLFVBQVMsSUFBSTtJQUFBO0lBQ2xDQyxhQUFhRjtJQUNiRyxPQUFPO1FBQUNKLE1BQU1LO1FBQVFILFVBQVUsSUFBSTtJQUFBO0lBQ3BDSSx1QkFBdUI7UUFBQ04sTUFBTUs7SUFBTTtJQUNwQ0UsUUFBUTtRQUFDO1lBQUNQLE1BQUtDO1FBQU07S0FBRTtJQUN2Qk8sVUFBVTtRQUFDUixNQUFLTixnRUFBdUI7UUFBRWlCLEtBQUk7SUFBVTtJQUN2REMsWUFBWTtRQUFDWixNQUFLYTtJQUFNO0lBQ3hCQyxVQUFVO1FBQUNkLE1BQUtlO1FBQVNDLFNBQVMsS0FBSztJQUFBO0FBQ3pDLEdBQUc7SUFDREMsWUFBWSxJQUFJO0FBQ2xCO0FBRU8sTUFBTUMsVUFBVXJCLG9EQUFjLElBQUlGLCtDQUFLQSxDQUFDLFdBQVdHLGVBQWUiLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9lY29tbWVyY2UtYWRtaW4vLi9tb2RlbHMvUHJvZHVjdC5qcz8wOWM2Il0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBtb25nb29zZSwge21vZGVsLCBTY2hlbWEsIG1vZGVsc30gZnJvbSBcIm1vbmdvb3NlXCI7XG5cbmNvbnN0IFByb2R1Y3RTY2hlbWEgPSBuZXcgU2NoZW1hKHtcbiAgdGl0bGU6IHt0eXBlOlN0cmluZywgcmVxdWlyZWQ6dHJ1ZX0sXG4gIGRlc2NyaXB0aW9uOiBTdHJpbmcsXG4gIHByaWNlOiB7dHlwZTogTnVtYmVyLCByZXF1aXJlZDogdHJ1ZX0sXG4gIGRpc2NvdW50ZWRfcGVyY2VudGFnZToge3R5cGU6IE51bWJlcn0sXG4gIGltYWdlczogW3t0eXBlOlN0cmluZ31dLFxuICBjYXRlZ29yeToge3R5cGU6bW9uZ29vc2UuVHlwZXMuT2JqZWN0SWQsIHJlZjonQ2F0ZWdvcnknfSxcbiAgcHJvcGVydGllczoge3R5cGU6T2JqZWN0fSxcbiAgZmVhdHVyZWQ6IHt0eXBlOkJvb2xlYW4sIGRlZmF1bHQ6IGZhbHNlfVxufSwge1xuICB0aW1lc3RhbXBzOiB0cnVlLFxufSk7XG5cbmV4cG9ydCBjb25zdCBQcm9kdWN0ID0gbW9kZWxzLlByb2R1Y3QgfHwgbW9kZWwoJ1Byb2R1Y3QnLCBQcm9kdWN0U2NoZW1hKTsiXSwibmFtZXMiOlsibW9uZ29vc2UiLCJtb2RlbCIsIlNjaGVtYSIsIm1vZGVscyIsIlByb2R1Y3RTY2hlbWEiLCJ0aXRsZSIsInR5cGUiLCJTdHJpbmciLCJyZXF1aXJlZCIsImRlc2NyaXB0aW9uIiwicHJpY2UiLCJOdW1iZXIiLCJkaXNjb3VudGVkX3BlcmNlbnRhZ2UiLCJpbWFnZXMiLCJjYXRlZ29yeSIsIlR5cGVzIiwiT2JqZWN0SWQiLCJyZWYiLCJwcm9wZXJ0aWVzIiwiT2JqZWN0IiwiZmVhdHVyZWQiLCJCb29sZWFuIiwiZGVmYXVsdCIsInRpbWVzdGFtcHMiLCJQcm9kdWN0Il0sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///(api)/./models/Product.js\n");
+        <div style="margin-bottom: 20px; border-top: 1px solid #ddd; padding-top: 20px;">
+          <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Order Summary</h2>
+          <ul style="list-style: none; padding: 0;">
+            ${productDetails.map((product)=>`
+              <li style="display: flex; gap: 10px; border-bottom: 1px solid #ddd; padding: 15px 0;">
+                <img src="${product.image}" alt="${product.title}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 5px;" />
+                <div style="flex-grow: 1;">
+                  <p style="margin: 0; font-weight: bold;">${product.title}</p>
+                  <p style="margin: 4px 0;"><strong>Quantity:</strong> ${product.quantity}</p>
+                  <p style="margin: 4px 0;"><strong>Price:</strong> PKR ${product.price.toFixed(2)}</p>
+                  <p style="margin: 4px 0;"><strong>Dimensions:</strong> ${product.selectedOptions.Dimensions || "N/A"}</p>
+                  <p style="margin: 4px 0;"><strong>Color:</strong> ${product.selectedOptions.Colors || "N/A"}</p>
+                </div>
+              </li>`).join("")}
+          </ul>
+        </div>
 
-/***/ }),
+  <div style="margin-bottom: 20px; border-top: 1px solid #ddd; padding-top: 20px;">
+    <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Payment Summary</h2>
+    <p><strong>Item(s) Total:</strong> PKR ${itemsTotal.toFixed(2)}</p>
+    <p><strong>Shop Discount:</strong> ${shopDiscount > 0 ? `-PKR ${shopDiscount.toFixed(2)}` : "PKR 0.00"}</p>
+    <p><strong>Subtotal:</strong> PKR ${subtotal.toFixed(2)}</p>
+    <p><strong>Delivery:</strong> ${deliveryFee === 0 ? "FREE" : `PKR ${deliveryFee.toFixed(2)}`}</p>
+    <h3 style="margin-top: 10px; font-size: 1.2rem;"><strong>Total Payment:</strong> PKR ${totalPayment.toFixed(2)}</h3>
+  </div>
 
-/***/ "(api)/./pages/api/sendEmail.js":
-/*!********************************!*\
-  !*** ./pages/api/sendEmail.js ***!
-  \********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+        <div style="margin-bottom: 20px; border-top: 1px solid #ddd; padding-top: 20px;">
+          <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Delivery Details</h2>
+          <p><strong>Address:</strong> ${order.streetAddress}, ${order.city}, ${order.country}</p>
+          <p><strong>Phone:</strong> ${order.phone}</p>
+          <p><strong>Email:</strong> ${order.email}</p>
+          <p><strong>Payment Method:</strong> ${order.paymentMethod}</p>
+        </div>
 
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ handler)\n/* harmony export */ });\n/* harmony import */ var mongoose__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! mongoose */ \"mongoose\");\n/* harmony import */ var mongoose__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(mongoose__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _Email_Sender__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/Email/Sender */ \"(api)/./Email/Sender.js\");\n// pages/api/send-emails.js\n\n // Adjust the import as necessary\nconst connectDB = async ()=>{\n    if ((mongoose__WEBPACK_IMPORTED_MODULE_0___default().connection.readyState) === 0) {\n        await mongoose__WEBPACK_IMPORTED_MODULE_0___default().connect(process.env.MONGODB_URI, {\n            useNewUrlParser: true,\n            useUnifiedTopology: true\n        });\n    }\n};\nasync function handler(req, res) {\n    if (req.method === \"POST\") {\n        try {\n            await connectDB(); // Ensure the database is connected\n            await (0,_Email_Sender__WEBPACK_IMPORTED_MODULE_1__.sendConfirmationEmails)(); // Call your function to send emails\n            res.status(200).json({\n                message: \"Emails sent successfully.\"\n            });\n        } catch (error) {\n            console.error(\"Error sending emails:\", error);\n            res.status(500).json({\n                error: \"Failed to send emails.\"\n            });\n        }\n    } else {\n        res.setHeader(\"Allow\", [\n            \"POST\"\n        ]);\n        res.status(405).end(`Method ${req.method} Not Allowed`);\n    }\n}\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiKGFwaSkvLi9wYWdlcy9hcGkvc2VuZEVtYWlsLmpzLmpzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7QUFBQSwyQkFBMkI7QUFDSztBQUN3QixDQUFDLGlDQUFpQztBQUUxRixNQUFNRSxZQUFZLFVBQVk7SUFDMUIsSUFBSUYsdUVBQThCLEtBQUssR0FBRztRQUN4QyxNQUFNQSx1REFBZ0IsQ0FBQ00sUUFBUUMsR0FBRyxDQUFDQyxXQUFXLEVBQUU7WUFDOUNDLGlCQUFpQixJQUFJO1lBQ3JCQyxvQkFBb0IsSUFBSTtRQUMxQjtJQUNGLENBQUM7QUFDSDtBQUVlLGVBQWVDLFFBQVFDLEdBQUcsRUFBRUMsR0FBRyxFQUFFO0lBQzlDLElBQUlELElBQUlFLE1BQU0sS0FBSyxRQUFRO1FBQ3pCLElBQUk7WUFDRixNQUFNWixhQUFhLG1DQUFtQztZQUN0RCxNQUFNRCxxRUFBc0JBLElBQUksb0NBQW9DO1lBQ3BFWSxJQUFJRSxNQUFNLENBQUMsS0FBS0MsSUFBSSxDQUFDO2dCQUFFQyxTQUFTO1lBQTRCO1FBQzlELEVBQUUsT0FBT0MsT0FBTztZQUNkQyxRQUFRRCxLQUFLLENBQUMseUJBQXlCQTtZQUN2Q0wsSUFBSUUsTUFBTSxDQUFDLEtBQUtDLElBQUksQ0FBQztnQkFBRUUsT0FBTztZQUF5QjtRQUN6RDtJQUNGLE9BQU87UUFDTEwsSUFBSU8sU0FBUyxDQUFDLFNBQVM7WUFBQztTQUFPO1FBQy9CUCxJQUFJRSxNQUFNLENBQUMsS0FBS00sR0FBRyxDQUFDLENBQUMsT0FBTyxFQUFFVCxJQUFJRSxNQUFNLENBQUMsWUFBWSxDQUFDO0lBQ3hELENBQUM7QUFDSCxDQUFDIiwic291cmNlcyI6WyJ3ZWJwYWNrOi8vZWNvbW1lcmNlLWFkbWluLy4vcGFnZXMvYXBpL3NlbmRFbWFpbC5qcz8yMDMwIl0sInNvdXJjZXNDb250ZW50IjpbIi8vIHBhZ2VzL2FwaS9zZW5kLWVtYWlscy5qc1xuaW1wb3J0IG1vbmdvb3NlIGZyb20gXCJtb25nb29zZVwiO1xuaW1wb3J0IHsgc2VuZENvbmZpcm1hdGlvbkVtYWlscyB9IGZyb20gXCJAL0VtYWlsL1NlbmRlclwiOyAvLyBBZGp1c3QgdGhlIGltcG9ydCBhcyBuZWNlc3NhcnlcblxuY29uc3QgY29ubmVjdERCID0gYXN5bmMgKCkgPT4ge1xuICAgIGlmIChtb25nb29zZS5jb25uZWN0aW9uLnJlYWR5U3RhdGUgPT09IDApIHtcbiAgICAgIGF3YWl0IG1vbmdvb3NlLmNvbm5lY3QocHJvY2Vzcy5lbnYuTU9OR09EQl9VUkksIHtcbiAgICAgICAgdXNlTmV3VXJsUGFyc2VyOiB0cnVlLFxuICAgICAgICB1c2VVbmlmaWVkVG9wb2xvZ3k6IHRydWUsXG4gICAgICB9KTtcbiAgICB9XG4gIH07XG4gIFxuICBleHBvcnQgZGVmYXVsdCBhc3luYyBmdW5jdGlvbiBoYW5kbGVyKHJlcSwgcmVzKSB7XG4gICAgaWYgKHJlcS5tZXRob2QgPT09IFwiUE9TVFwiKSB7XG4gICAgICB0cnkge1xuICAgICAgICBhd2FpdCBjb25uZWN0REIoKTsgLy8gRW5zdXJlIHRoZSBkYXRhYmFzZSBpcyBjb25uZWN0ZWRcbiAgICAgICAgYXdhaXQgc2VuZENvbmZpcm1hdGlvbkVtYWlscygpOyAvLyBDYWxsIHlvdXIgZnVuY3Rpb24gdG8gc2VuZCBlbWFpbHNcbiAgICAgICAgcmVzLnN0YXR1cygyMDApLmpzb24oeyBtZXNzYWdlOiBcIkVtYWlscyBzZW50IHN1Y2Nlc3NmdWxseS5cIiB9KTtcbiAgICAgIH0gY2F0Y2ggKGVycm9yKSB7XG4gICAgICAgIGNvbnNvbGUuZXJyb3IoXCJFcnJvciBzZW5kaW5nIGVtYWlsczpcIiwgZXJyb3IpO1xuICAgICAgICByZXMuc3RhdHVzKDUwMCkuanNvbih7IGVycm9yOiBcIkZhaWxlZCB0byBzZW5kIGVtYWlscy5cIiB9KTtcbiAgICAgIH1cbiAgICB9IGVsc2Uge1xuICAgICAgcmVzLnNldEhlYWRlcihcIkFsbG93XCIsIFtcIlBPU1RcIl0pO1xuICAgICAgcmVzLnN0YXR1cyg0MDUpLmVuZChgTWV0aG9kICR7cmVxLm1ldGhvZH0gTm90IEFsbG93ZWRgKTtcbiAgICB9XG4gIH0iXSwibmFtZXMiOlsibW9uZ29vc2UiLCJzZW5kQ29uZmlybWF0aW9uRW1haWxzIiwiY29ubmVjdERCIiwiY29ubmVjdGlvbiIsInJlYWR5U3RhdGUiLCJjb25uZWN0IiwicHJvY2VzcyIsImVudiIsIk1PTkdPREJfVVJJIiwidXNlTmV3VXJsUGFyc2VyIiwidXNlVW5pZmllZFRvcG9sb2d5IiwiaGFuZGxlciIsInJlcSIsInJlcyIsIm1ldGhvZCIsInN0YXR1cyIsImpzb24iLCJtZXNzYWdlIiwiZXJyb3IiLCJjb25zb2xlIiwic2V0SGVhZGVyIiwiZW5kIl0sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///(api)/./pages/api/sendEmail.js\n");
+        <div style="text-align: center; border-top: 1px solid #ddd; padding-top: 20px;">
+          <p>This is an automatically generated email. Please do not reply.</p>
+        </div>
+      </div>`;
+            const mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: order.email,
+                subject: "Your Order Confirmation",
+                html: message
+            };
+            await transporter.sendMail(mailOptions);
+            console.log(`Confirmation email sent for order ID: ${order._id}`);
+            await Order/* Order.findByIdAndUpdate */.K.findByIdAndUpdate(order._id, {
+                emailSent: true
+            });
+        }
+    } catch (error) {
+        console.error("Error sending confirmation emails:", error);
+    }
+}
+
+;// CONCATENATED MODULE: ./pages/api/sendEmail.js
+// pages/api/send-emails.js
+
+ // Adjust the import as necessary
+const connectDB = async ()=>{
+    if ((external_mongoose_default()).connection.readyState === 0) {
+        await external_mongoose_default().connect(process.env.MONGODB_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        });
+    }
+};
+async function handler(req, res) {
+    if (req.method === "POST") {
+        try {
+            await connectDB(); // Ensure the database is connected
+            await sendConfirmationEmails(); // Call your function to send emails
+            res.status(200).json({
+                message: "Emails sent successfully."
+            });
+        } catch (error) {
+            console.error("Error sending emails:", error);
+            res.status(500).json({
+                error: "Failed to send emails."
+            });
+        }
+    } else {
+        res.setHeader("Allow", [
+            "POST"
+        ]);
+        res.status(405).end(`Method ${req.method} Not Allowed`);
+    }
+}
+
 
 /***/ })
 
@@ -80,7 +184,7 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpac
 var __webpack_require__ = require("../../webpack-api-runtime.js");
 __webpack_require__.C(exports);
 var __webpack_exec__ = (moduleId) => (__webpack_require__(__webpack_require__.s = moduleId))
-var __webpack_exports__ = (__webpack_exec__("(api)/./pages/api/sendEmail.js"));
+var __webpack_exports__ = __webpack_require__.X(0, [97], () => (__webpack_exec__(2232)));
 module.exports = __webpack_exports__;
 
 })();
